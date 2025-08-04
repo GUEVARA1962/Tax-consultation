@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>税務相談チャットボット (n8n連携)</title>
+    <title>税務相談チャットボット</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -11,84 +11,22 @@
         body {
             font-family: 'Noto Sans JP', 'Inter', sans-serif;
         }
-        /* スクロールバーのスタイル */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-        /* ボットのメッセージスタイル (Markdown対応) */
-        .bot-message table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-            border: 1px solid #e2e8f0;
-        }
-        .bot-message th, .bot-message td {
-            border: 1px solid #e2e8f0;
-            padding: 0.75rem;
-            text-align: left;
-        }
-        .bot-message th {
-            background-color: #f8fafc;
-            font-weight: 600;
-        }
-        .bot-message ul {
-            list-style-type: disc;
-            padding-left: 1.5rem;
-            margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .bot-message ol {
-            list-style-type: decimal;
-            padding-left: 1.5rem;
-        }
-        .bot-message a {
-            color: #2563eb;
-            text-decoration: underline;
-        }
-        .bot-message a:hover {
-            color: #1d4ed8;
-        }
-        .bot-message strong, .bot-message b {
-            font-weight: 600;
-        }
-        .bot-message h1, .bot-message h2, .bot-message h3 {
-            font-weight: 600;
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 0.25rem;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .bot-message table { width: 100%; border-collapse: collapse; margin-top: 1rem; margin-bottom: 1rem; border: 1px solid #e2e8f0; }
+        .bot-message th, .bot-message td { border: 1px solid #e2e8f0; padding: 0.75rem; text-align: left; }
+        .bot-message th { background-color: #f8fafc; font-weight: 600; }
+        .bot-message ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+        .bot-message ol { list-style-type: decimal; padding-left: 1.5rem; }
+        .bot-message a { color: #2563eb; text-decoration: underline; }
+        .bot-message a:hover { color: #1d4ed8; }
+        .bot-message strong, .bot-message b { font-weight: 600; }
+        .bot-message h1, .bot-message h2, .bot-message h3 { font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem; }
         .bot-message h1 { font-size: 1.25rem; }
         .bot-message h2 { font-size: 1.1rem; }
         .bot-message h3 { font-size: 1.0rem; }
-        .bot-message hr {
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-            border-top: 1px solid #e2e8f0;
-        }
-        .bot-message code {
-            background-color: #e2e8f0;
-            padding: 0.2rem 0.4rem;
-            border-radius: 0.25rem;
-            font-family: monospace;
-        }
-        .bot-message pre {
-            background-color: #f1f5f9;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-        }
     </style>
 </head>
 <body class="bg-slate-100 flex items-center justify-center min-h-screen">
@@ -114,7 +52,6 @@
 
         <!-- チャット画面 -->
         <div id="chat-screen" class="hidden flex-col h-full">
-            <!-- ヘッダー -->
             <div class="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50 rounded-t-xl">
                 <button id="back-to-selection" class="text-slate-500 hover:text-slate-800 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
@@ -122,13 +59,7 @@
                 <h2 id="chat-title" class="text-lg font-bold text-slate-800"></h2>
                 <div class="w-6"></div>
             </div>
-
-            <!-- メッセージ表示エリア -->
-            <div id="chat-messages" class="flex-1 p-6 overflow-y-auto custom-scrollbar">
-                <!-- メッセージがここに追加される -->
-            </div>
-            
-            <!-- ローディングインジケーター -->
+            <div id="chat-messages" class="flex-1 p-6 overflow-y-auto custom-scrollbar"></div>
             <div id="loading-indicator" class="hidden p-6 pt-0">
                 <div class="flex items-center space-x-2">
                     <div class="w-2 h-2 bg-slate-400 rounded-full animate-pulse [animation-delay:-0.3s]"></div>
@@ -137,8 +68,6 @@
                     <span class="text-sm text-slate-500">回答を生成中です...</span>
                 </div>
             </div>
-
-            <!-- 入力フォーム -->
             <div class="p-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
                 <form id="chat-form" class="flex items-center space-x-3">
                     <input type="text" id="chat-input" placeholder="質問を入力してください..." class="flex-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
@@ -164,10 +93,9 @@
         const loadingIndicator = document.getElementById('loading-indicator');
 
         let currentTax = '';
-        let chatHistory = [];
+        let sessionID = ''; // sessionIDをグローバルで保持 (n8nの仕様に合わせてIDを大文字に変更)
 
         // --- 画面遷移ロジック ---
-
         taxChoiceButtons.forEach(button => {
             button.addEventListener('click', () => {
                 currentTax = button.dataset.tax;
@@ -189,36 +117,26 @@
             chatScreen.classList.add('flex');
             chatTitle.textContent = `${currentTax}に関するご相談`;
             
+            // セッションIDを生成（チャット開始時に一度だけ）
+            sessionID = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
             chatMessages.innerHTML = '';
             const welcomeMessage = `こんにちは！${currentTax}について、どのようなことにお困りですか？ご質問を下の入力欄からお送りください。`;
             addMessageToChat('bot', welcomeMessage);
-            chatHistory = []; 
         }
 
         // --- チャット機能ロジック ---
-
-        function addMessageToChat(sender, message, isHtml = false) {
+        function addMessageToChat(sender, message) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('mb-4', 'flex');
 
             if (sender === 'user') {
                 messageElement.classList.add('justify-end');
-                messageElement.innerHTML = `
-                    <div class="bg-blue-500 text-white rounded-lg rounded-br-none py-2 px-4 max-w-sm break-words">
-                        ${escapeHtml(message)}
-                    </div>
-                `;
+                messageElement.innerHTML = `<div class="bg-blue-500 text-white rounded-lg rounded-br-none py-2 px-4 max-w-sm break-words">${escapeHtml(message)}</div>`;
             } else {
+                const content = marked.parse(message);
                 messageElement.classList.add('justify-start', 'bot-message');
-                const content = isHtml ? message : marked.parse(escapeHtml(message));
-                messageElement.innerHTML = `
-                    <div class="flex-shrink-0 mr-3">
-                        <div class="w-8 h-8 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold">税</div>
-                    </div>
-                    <div class="bg-slate-200 text-slate-800 rounded-lg rounded-bl-none py-2 px-4 max-w-md break-words">
-                        ${content}
-                    </div>
-                `;
+                messageElement.innerHTML = `<div class="flex-shrink-0 mr-3"><div class="w-8 h-8 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold">税</div></div><div class="bg-slate-200 text-slate-800 rounded-lg rounded-bl-none py-2 px-4 max-w-md break-words">${content}</div>`;
             }
             chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -238,24 +156,16 @@
             addMessageToChat('user', userMessage);
             chatInput.value = '';
             
-            chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
-
             loadingIndicator.classList.remove('hidden');
             chatInput.disabled = true;
             sendButton.disabled = true;
 
             try {
-                const botResponse = await getBotResponse();
-                
-                const htmlResponse = marked.parse(botResponse);
-                addMessageToChat('bot', htmlResponse, true);
-                
-                chatHistory.push({ role: 'model', parts: [{ text: botResponse }] });
-
+                const botResponse = await getBotResponse(userMessage);
+                addMessageToChat('bot', botResponse);
             } catch (error) {
                 console.error('Error fetching bot response:', error);
                 addMessageToChat('bot', '申し訳ありません、エラーが発生しました。もう一度お試しください。');
-                chatHistory.pop();
             } finally {
                 loadingIndicator.classList.add('hidden');
                 chatInput.disabled = false;
@@ -265,30 +175,22 @@
         });
 
         // --- n8n連携 ---
-        // この関数は、バックエンドとして構築したn8nのWebhookを呼び出します。
-        async function getBotResponse() {
+        async function getBotResponse(question) {
             // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-            // ここに、n8nで作成したWebhookの「Production URL」を設定してください。
+            // ここに、あなたのn8nで作成したWebhookの「Production URL」を設定してください。
             const n8nWebhookUrl = "https://my-n8n.xvps.jp/webhook/ee1320c2-6684-40ee-8444-d1a9fa3afafa";
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-            // APIキーはフロントエンドには含めません。n8n側で安全に管理します。
-
             // n8nに送信するデータ
             const payload = {
-                // 最新のユーザーの質問
-                question: chatHistory[chatHistory.length - 1].parts[0].text, 
-                // 現在選択されている税金の種類
-                taxType: currentTax, 
-                // これまでの会話履歴（JSON文字列として送信）
-                history: JSON.stringify(chatHistory.slice(0, -1)) 
+                question: question,
+                sessionID: sessionID, // メモリ機能のためにsessionIDを送信
+                taxType: currentTax
             };
             
             const response = await fetch(n8nWebhookUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
@@ -297,18 +199,7 @@
                 throw new Error(`n8n webhook request failed with status ${response.status}: ${errorBody}`);
             }
 
-            // n8nからのレスポンスをテキストとして取得します。
-            // n8nのワークフローの最後で、Geminiからの回答テキストを直接返すように設定してください。
-            const resultText = await response.text();
-            
-            // n8n側で免責事項を付与することもできますが、フロント側で最終的に付与する例です。
-            const disclaimer = "これは一般的な説明です。個別の状況によって異なる場合があるため、最終的な判断は税務署や税理士にご相談ください。";
-            
-            if (resultText.includes(disclaimer)) {
-                return resultText;
-            } else {
-                return resultText.trim() + `\n\n---\n${disclaimer}`;
-            }
+            return await response.text();
         }
     </script>
 </body>

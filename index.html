@@ -3,36 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>税務相談チャットボット</title>
+    <title>税務相談チャットボット (AI Agent・メモリリセット機能搭載)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Noto Sans JP', 'Inter', sans-serif;
-        }
+        body { font-family: 'Noto Sans JP', 'Inter', sans-serif; }
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        .bot-message table { width: 100%; border-collapse: collapse; margin-top: 1rem; margin-bottom: 1rem; border: 1px solid #e2e8f0; }
+        .bot-message table { width: 100%; border-collapse: collapse; margin: 1em 0; border: 1px solid #e2e8f0; }
         .bot-message th, .bot-message td { border: 1px solid #e2e8f0; padding: 0.75rem; text-align: left; }
         .bot-message th { background-color: #f8fafc; font-weight: 600; }
-        .bot-message ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
-        .bot-message ol { list-style-type: decimal; padding-left: 1.5rem; }
+        .bot-message ul, .bot-message ol { padding-left: 1.5rem; margin: 0.5em 0; }
         .bot-message a { color: #2563eb; text-decoration: underline; }
-        .bot-message a:hover { color: #1d4ed8; }
-        .bot-message strong, .bot-message b { font-weight: 600; }
-        .bot-message h1, .bot-message h2, .bot-message h3 { font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem; }
-        .bot-message h1 { font-size: 1.25rem; }
-        .bot-message h2 { font-size: 1.1rem; }
-        .bot-message h3 { font-size: 1.0rem; }
+        .bot-message h2 { font-size: 1.2rem; font-weight: 600; margin-top: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0;}
     </style>
 </head>
 <body class="bg-slate-100 flex items-center justify-center min-h-screen">
     <div id="chatbot-container" class="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-2xl flex flex-col h-[90vh] max-h-[800px]">
 
-        <!-- 税金選択画面 -->
         <div id="selection-screen" class="flex flex-col items-center justify-center p-8 h-full">
             <h1 class="text-2xl font-bold text-slate-800 mb-2">税務相談チャットボット</h1>
             <p class="text-slate-600 mb-8">ご相談したい税金の種類を選択してください。</p>
@@ -50,7 +40,6 @@
             </p>
         </div>
 
-        <!-- チャット画面 -->
         <div id="chat-screen" class="hidden flex-col h-full">
             <div class="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50 rounded-t-xl">
                 <button id="back-to-selection" class="text-slate-500 hover:text-slate-800 transition-colors">
@@ -80,7 +69,6 @@
     </div>
 
     <script>
-        // DOM要素の取得
         const selectionScreen = document.getElementById('selection-screen');
         const chatScreen = document.getElementById('chat-screen');
         const taxChoiceButtons = document.querySelectorAll('.tax-choice-btn');
@@ -89,17 +77,15 @@
         const chatMessages = document.getElementById('chat-messages');
         const chatForm = document.getElementById('chat-form');
         const chatInput = document.getElementById('chat-input');
-        const sendButton = document.getElementById('send-button');
         const loadingIndicator = document.getElementById('loading-indicator');
 
         let currentTax = '';
-        let sessionID = ''; // sessionIDをグローバルで保持 (n8nの仕様に合わせてIDを大文字に変更)
+        let sessionID = '';
 
-        // --- 画面遷移ロジック ---
         taxChoiceButtons.forEach(button => {
             button.addEventListener('click', () => {
                 currentTax = button.dataset.tax;
-                startChat();
+                startChat(true); // 初回起動フラグを立てる
             });
         });
 
@@ -110,22 +96,24 @@
             chatScreen.classList.remove('flex');
         });
 
-        function startChat() {
+        function startChat(isInitialStart) {
             selectionScreen.classList.add('hidden');
-            selectionScreen.classList.remove('flex');
             chatScreen.classList.remove('hidden');
             chatScreen.classList.add('flex');
             chatTitle.textContent = `${currentTax}に関するご相談`;
             
-            // セッションIDを生成（チャット開始時に一度だけ）
+            // ★ メモリリセットのために、新しいセッションIDを生成
             sessionID = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-            chatMessages.innerHTML = '';
-            const welcomeMessage = `こんにちは！${currentTax}について、どのようなことにお困りですか？ご質問を下の入力欄からお送りください。`;
+            // ★ チャットをやり直す場合はメッセージをクリア
+            if (isInitialStart) {
+                chatMessages.innerHTML = '';
+            }
+            
+            const welcomeMessage = `こんにちは！${currentTax}について、どのようなことにお困りですか？`;
             addMessageToChat('bot', welcomeMessage);
         }
 
-        // --- チャット機能ロジック ---
         function addMessageToChat(sender, message) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('mb-4', 'flex');
@@ -140,6 +128,38 @@
             }
             chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // ★ 専門外の質問への応答とボタンを表示する関数
+        function handleWrongTaxCategory(data) {
+            addMessageToChat('bot', data.message);
+            
+            setTimeout(() => {
+                const followUpElement = document.createElement('div');
+                followUpElement.classList.add('mb-4', 'flex', 'justify-start', 'bot-message');
+                followUpElement.innerHTML = `
+                    <div class="flex-shrink-0 mr-3"><div class="w-8 h-8 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold">税</div></div>
+                    <div class="bg-slate-200 text-slate-800 rounded-lg rounded-bl-none py-2 px-4 max-w-md">
+                        <p class="mb-3">${data.follow_up_question}</p>
+                        <div class="flex space-x-2">
+                            <button id="reset-chat-yes" class="bg-blue-500 text-white px-4 py-1 rounded-lg hover:bg-blue-600 text-sm">はい</button>
+                            <button id="reset-chat-no" class="bg-slate-400 text-white px-4 py-1 rounded-lg hover:bg-slate-500 text-sm">いいえ</button>
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(followUpElement);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                document.getElementById('reset-chat-yes').addEventListener('click', () => {
+                    // 「はい」が押されたら、チャットをリセットしてやり直す
+                    startChat(false); // 初回起動ではないのでメッセージはクリアしない
+                    followUpElement.remove(); // ボタンを削除
+                });
+                document.getElementById('reset-chat-no').addEventListener('click', () => {
+                    // 「いいえ」が押されたら、トップ画面に戻る
+                    backToSelectionButton.click();
+                });
+            }, 500); // 少し間を置いて表示
         }
         
         function escapeHtml(text) {
@@ -158,34 +178,40 @@
             
             loadingIndicator.classList.remove('hidden');
             chatInput.disabled = true;
-            sendButton.disabled = true;
 
             try {
-                const botResponse = await getBotResponse(userMessage);
-                addMessageToChat('bot', botResponse);
+                const botResponseText = await getBotResponse(userMessage);
+                
+                // ★ レスポンスがJSON形式かテキスト形式か判定
+                try {
+                    const jsonData = JSON.parse(botResponseText);
+                    if (jsonData.type === 'wrong_tax_category') {
+                        handleWrongTaxCategory(jsonData);
+                    } else {
+                        addMessageToChat('bot', botResponseText);
+                    }
+                } catch (jsonError) {
+                    // JSONでなければ通常のテキストとして表示
+                    addMessageToChat('bot', botResponseText);
+                }
+
             } catch (error) {
                 console.error('Error fetching bot response:', error);
                 addMessageToChat('bot', '申し訳ありません、エラーが発生しました。もう一度お試しください。');
             } finally {
                 loadingIndicator.classList.add('hidden');
                 chatInput.disabled = false;
-                sendButton.disabled = false;
                 chatInput.focus();
             }
         });
 
-        // --- n8n連携 ---
         async function getBotResponse(question) {
-            // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-            // ここに、あなたのn8nで作成したWebhookの「Production URL」を設定してください。
             const n8nWebhookUrl = "https://my-n8n.xvps.jp/webhook/ee1320c2-6684-40ee-8444-d1a9fa3afafa";
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-            // n8nに送信するデータ
             const payload = {
                 question: question,
-                sessionID: sessionID, // メモリ機能のためにsessionIDを送信
-                taxType: currentTax
+                sessionID: sessionID,
+                taxType: currentTax 
             };
             
             const response = await fetch(n8nWebhookUrl, {
@@ -198,7 +224,6 @@
                 const errorBody = await response.text();
                 throw new Error(`n8n webhook request failed with status ${response.status}: ${errorBody}`);
             }
-
             return await response.text();
         }
     </script>

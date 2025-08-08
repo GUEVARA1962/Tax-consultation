@@ -23,6 +23,7 @@
 <body class="bg-slate-100 flex items-center justify-center min-h-screen">
     <div id="chatbot-container" class="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-2xl flex flex-col h-[90vh] max-h-[800px]">
 
+        <!-- 税金選択画面 -->
         <div id="selection-screen" class="flex flex-col items-center justify-center p-8 h-full">
             <h1 class="text-2xl font-bold text-slate-800 mb-2">税務相談チャットボット</h1>
             <p class="text-slate-600 mb-8">ご相談したい税金の種類を選択してください。</p>
@@ -40,6 +41,7 @@
             </p>
         </div>
 
+        <!-- チャット画面 -->
         <div id="chat-screen" class="hidden flex-col h-full">
             <div class="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50 rounded-t-xl">
                 <button id="back-to-selection" class="text-slate-500 hover:text-slate-800 transition-colors">
@@ -85,7 +87,7 @@
         taxChoiceButtons.forEach(button => {
             button.addEventListener('click', () => {
                 currentTax = button.dataset.tax;
-                startChat(true); // 初回起動フラグを立てる
+                startChat(true); // isInitialStart = true
             });
         });
 
@@ -102,10 +104,10 @@
             chatScreen.classList.add('flex');
             chatTitle.textContent = `${currentTax}に関するご相談`;
             
-            // ★ メモリリセットのために、新しいセッションIDを生成
+            // メモリリセットのために、新しいセッションIDを生成
             sessionID = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-            // ★ チャットをやり直す場合はメッセージをクリア
+            // 最初の起動時のみチャット履歴をクリア
             if (isInitialStart) {
                 chatMessages.innerHTML = '';
             }
@@ -130,7 +132,7 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // ★ 専門外の質問への応答とボタンを表示する関数
+        // 専門外の質問への応答とボタンを表示する関数
         function handleWrongTaxCategory(data) {
             addMessageToChat('bot', data.message);
             
@@ -152,7 +154,7 @@
 
                 document.getElementById('reset-chat-yes').addEventListener('click', () => {
                     // 「はい」が押されたら、チャットをリセットしてやり直す
-                    startChat(false); // 初回起動ではないのでメッセージはクリアしない
+                    startChat(false); // isInitialStart = false
                     followUpElement.remove(); // ボタンを削除
                 });
                 document.getElementById('reset-chat-no').addEventListener('click', () => {
@@ -182,16 +184,20 @@
             try {
                 const botResponseText = await getBotResponse(userMessage);
                 
-                // ★ レスポンスがJSON形式かテキスト形式か判定
+                // レスポンスからJSONを抽出する、より堅牢なロジック
+                let jsonData = null;
                 try {
-                    const jsonData = JSON.parse(botResponseText);
-                    if (jsonData.type === 'wrong_tax_category') {
-                        handleWrongTaxCategory(jsonData);
-                    } else {
-                        addMessageToChat('bot', botResponseText);
+                    const jsonMatch = botResponseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        jsonData = JSON.parse(jsonMatch[0]);
                     }
-                } catch (jsonError) {
-                    // JSONでなければ通常のテキストとして表示
+                } catch (e) {
+                    console.warn("Could not parse JSON from response:", e);
+                }
+
+                if (jsonData && jsonData.type === 'wrong_tax_category') {
+                    handleWrongTaxCategory(jsonData);
+                } else {
                     addMessageToChat('bot', botResponseText);
                 }
 
